@@ -45,7 +45,7 @@ def get_data_loader(data_path, opts):
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
-
+    transform = None
     if opts.data_aug == 'basic':
         transform = basic_transform
     elif opts.data_aug == 'deluxe':
