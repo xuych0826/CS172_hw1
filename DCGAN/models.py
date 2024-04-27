@@ -55,11 +55,11 @@ class DCGenerator(nn.Module):
         ##   FILL THIS IN: CREATE ARCHITECTURE   ##
         ###########################################
 
-        self.deconv1 =
-        self.deconv2 =
-        self.deconv3 =
-        self.deconv4 =
-        self.deconv5 =
+        self.deconv1 = deconv(in_channels=noise_size, out_channels=conv_dim*8, kernel_size=4, stride=1, padding=0, norm='instance')
+        self.deconv2 = deconv(in_channels=conv_dim*8, out_channels=conv_dim*4, kernel_size=4, stride=2, padding=1, norm='instance')
+        self.deconv3 = deconv(in_channels=conv_dim*4, out_channels=conv_dim*2, kernel_size=4, stride=2, padding=1, norm='instance')
+        self.deconv4 = deconv(in_channels=conv_dim*2, out_channels=conv_dim, kernel_size=4, stride=2, padding=1, norm='instance')
+        self.deconv5 = deconv(in_channels=conv_dim, out_channels=3, kernel_size=4, stride=2, padding=1, norm=None)
 
     def forward(self, z):
         """Generates an image given a sample of random noise.
@@ -72,12 +72,10 @@ class DCGenerator(nn.Module):
             ------
                 out: BS x channels x image_width x image_height  -->  16x3x32x32
         """
-
-
-        ###########################################
-        ##   FILL THIS IN: FORWARD PASS   ##
-        ###########################################
-
+        out = F.relu(self.deconv1(z))
+        out = F.relu(self.deconv2(out))
+        out = F.relu(self.deconv3(out))
+        out = F.relu(self.deconv4(out))
         out = F.tanh(self.deconv5(out))
         return out
 
@@ -98,26 +96,24 @@ class DCDiscriminator(nn.Module):
     """Defines the architecture of the discriminator network.
        Note: Both discriminators D_X and D_Y have the same architecture in this assignment.
     """
-    def __init__(self, conv_dim=64, norm='batch'):
+    def __init__(self, conv_dim=32, norm='batch'):
         super(DCDiscriminator, self).__init__()
 
         ###########################################
         ##   FILL THIS IN: CREATE ARCHITECTURE   ##
         ###########################################
 
-        self.conv1 =
-        self.conv2 =
-        self.conv3 =
-        self.conv4 =
-        self.conv5 =
+        self.conv1 = conv(in_channels=3, out_channels=conv_dim, kernel_size=4, stride=2, padding=1, norm = norm)
+        self.conv2 = conv(in_channels=conv_dim, out_channels=conv_dim*2, kernel_size=4, stride=2, padding=1, norm=norm)
+        self.conv3 = conv(in_channels=conv_dim*2, out_channels=conv_dim*4, kernel_size=4, stride=2, padding=1, norm=norm)
+        self.conv4 = conv(in_channels=conv_dim*4, out_channels=conv_dim*8, kernel_size=4, stride=2, padding=1, norm=norm)
+        self.conv5 = conv(in_channels=conv_dim*8, out_channels=1, kernel_size=4, stride=1, padding=0, norm=None)
 
     def forward(self, x):
         out = F.relu(self.conv1(x))
-
-        ###########################################
-        ##   FILL THIS IN: FORWARD PASS   ##
-        ###########################################
-
+        out = F.relu(self.conv2(out))
+        out = F.relu(self.conv3(out))
+        out = F.relu(self.conv4(out))
         out = self.conv5(out).squeeze()
         return out
 

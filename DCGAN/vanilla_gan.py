@@ -102,6 +102,7 @@ def save_samples(G, fixed_noise, iteration, opts):
     generated_images = utils.to_data(generated_images)
 
     grid = create_image_grid(generated_images)
+    grid = (grid * 255).astype(np.uint8)
 
     # merged = merge_images(X, fake_Y, opts)
     path = os.path.join(opts.sample_dir, 'sample-{:06d}.png'.format(iteration))
@@ -111,6 +112,7 @@ def save_samples(G, fixed_noise, iteration, opts):
 
 def save_images(images, iteration, opts, name):
     grid = create_image_grid(utils.to_data(images))
+    grid = (grid * 255).astype(np.uint8)
 
     path = os.path.join(opts.sample_dir, '{:s}-{:06d}.png'.format(name, iteration))
     imageio.imwrite(path, grid)
@@ -167,18 +169,18 @@ def training_loop(train_dataloader, opts):
 
             # FILL THIS IN
             # 1. Compute the discriminator loss on real images
-            D_real_loss = 
+            D_real_loss = torch.sum((D(real_images) - 1)**2) / (2 * batch_size)
 
             # 2. Sample noise
             noise = sample_noise(opts.noise_size)
 
             # 3. Generate fake images from the noise
-            fake_images =
+            fake_images = G(noise)
 
             # 4. Compute the discriminator loss on the fake images
-            D_fake_loss =
+            D_fake_loss = torch.sum(D(fake_images)**2) / (2 * batch_size)
 
-            D_total_loss =
+            D_total_loss = D_real_loss + D_fake_loss
             if iteration % 2 == 0:
                 D_total_loss.backward()
                 d_optimizer.step()
@@ -191,13 +193,13 @@ def training_loop(train_dataloader, opts):
 
             # FILL THIS IN
             # 1. Sample noise
-            noise =
+            noise = sample_noise(opts.noise_size)
 
             # 2. Generate fake images from the noise
-            fake_images =
+            fake_images = G(noise)
 
             # 3. Compute the generator loss
-            G_loss =
+            G_loss = torch.sum((D(fake_images) - 1)**2) / batch_size
 
             G_loss.backward()
             g_optimizer.step()
@@ -208,6 +210,8 @@ def training_loop(train_dataloader, opts):
                 print('Iteration [{:4d}/{:4d}] | D_real_loss: {:6.4f} | D_fake_loss: {:6.4f} | G_loss: {:6.4f}'.format(
                        iteration, total_train_iters, D_real_loss.item(), D_fake_loss.item(), G_loss.item()))
             # todo: add fake loss, real loss, G loss to tensorboard
+                logger.add_scalar(f'D loss using {opts.data_aug}', D_total_loss, iteration)
+                logger.add_scalar(f'G loss using {opts.data_aug}', G_loss, iteration)
 
             # Save the generated samples
             if iteration % opts.sample_every == 0:
